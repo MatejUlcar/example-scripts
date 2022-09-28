@@ -1,0 +1,50 @@
+BootStrap: docker
+From: nvcr.io/nvidia/pytorch:22.08-py3
+
+%environment
+export PATH=$PATH:/bin:/usr/bin:/usr/local/bin:/usr/local/cuda/bin:/opt/conda/bin
+export LC_ALL=C
+
+
+%runscript
+. /opt/conda/etc/profile.d/conda.sh
+conda activate base
+
+%startscript
+. /opt/conda/etc/profile.d/conda.sh
+conda activate base
+
+%post
+#set noninteractive tzdata
+export DEBIAN_FRONTEND=noninteractive
+export TZ=Europe/Ljubljana
+echo $TZ > /etc/timezone
+ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+apt-get update -y && \
+apt-get install -y libsndfile1 ffmpeg ca-certificates ssh rsync iputils-ping net-tools libcupti-dev infiniband-diags libopenmpi-dev fakeroot
+
+. /opt/conda/etc/profile.d/conda.sh
+conda activate base
+pip install pytorch_lightning==1.6.3
+
+# install transformers
+git clone https://github.com/huggingface/transformers.git
+cd transformers
+pip install -e .
+python -m pip install deepspeed sentencepiece datasets
+pip install evaluate accelerate
+
+# create mount points for NSC
+mkdir -p /data1 /data2 /data0 
+mkdir -p /var/spool/slurm 
+mkdir -p /cvmfs 
+mkdir -p /net/hold/data1
+touch /bin/nvidia-smi
+
+#for jost
+
+#for Maister/Trdina
+mkdir -p /ceph/grid
+mkdir -p /ceph/sys
+mkdir -p /ceph/hpc
+
